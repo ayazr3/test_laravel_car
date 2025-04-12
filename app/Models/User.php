@@ -21,6 +21,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'images',
+        'role',
+        'location'
     ];
 
     /**
@@ -41,5 +45,18 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'images' =>'array',
+        'location' => 'array'
     ];
+
+    public function getImagesAttribute($value) {
+        return json_decode($value,true)??[];
+    }
+
+    public function addImage($path) {
+        $images =$this -> images;
+        $images [] = $path;
+        $this -> images = $images;
+        $this -> save;
+    }
 }
