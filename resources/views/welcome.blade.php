@@ -62,11 +62,75 @@
                 </span>
               </div>
             </div>
-          </nav>
+        </nav>
+        <div class="container mx-auto py-8 m-5">
+            <h1 class="text-3xl font-bold text-center mb-8">السيارات المتاحة للبيع</h1>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 m-2">
+                @forelse ($cars as $car)
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                        <!-- معرض الصور -->
+                        @if($car->images && count($car->images) > 0)
+                            <img src="{{ Storage::url($car->images[0]) }}"
+                                 alt="{{ $car->brand }} {{ $car->model }}"
+                                 class="w-full h-48 object-cover">
+                        @else
+                            <div class="bg-gray-200 h-48 flex items-center justify-center">
+                                <span class="text-gray-500">لا توجد صورة</span>
+                            </div>
+                        @endif
+
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <h2 class="text-xl font-bold">{{ $car->brand }} {{ $car->model }}</h2>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                    متاحة
+                                </span>
+                            </div>
+
+                            <div class="mt-2 text-gray-600">
+                                <p><strong>السنة:</strong> {{ $car->year }}</p>
+                                <p><strong>السعر:</strong> {{ number_format($car->price) }} {{ $car->currency }}</p>
+                                <p class="mt-2 text-sm">{{ Str::limit($car->description, 100) }}</p>
+                            </div>
+
+                            <!-- معلومات الاتصال -->
+                            <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                                <h3 class="font-semibold text-sm text-gray-700">للتواصل:</h3>
+                                @if($car->user && $car->user->phone)
+                                    <a href="tel:{{ $car->user->phone }}" class="text-blue-600 hover:text-blue-800">
+                                        {{ $car->user->phone }}
+                                    </a>
+                                @else
+                                    <p class="text-gray-500 text-sm">لا يوجد رقم متاح</p>
+                                @endif
+                            </div>
+
+                            <a href="{{ route('car.show', $car->id) }}"
+                               class="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                                عرض التفاصيل
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-span-3 text-center py-8">
+                        <p class="text-gray-500">لا توجد سيارات متاحة حالياً</p>
+                    </div>
+                @endforelse
+            </div>
+
+            {{-- @if($unsoldCars->count() > 0)
+                <div class="mt-8 text-center">
+                    <a href="{{ route('cars.all') }}"
+                       class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700">
+                        عرض جميع السيارات
+                    </a>
+                </div>
+            @endif --}}
+        </div>
 
 
-
-            <div id="carouselExampleInterval" class="carousel carousel-dark slide" data-bs-ride="carousel">
+            {{-- <div id="carouselExampleInterval" class="carousel carousel-dark slide" data-bs-ride="carousel">
                 <div class="carousel-inner">
                   <div class="carousel-item active" data-bs-interval="10000">
                     <img src="{{ asset('web-Images/2.png') }}" class="d-block w-100" alt="...">
@@ -126,7 +190,7 @@
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div> --}}
 
             {{-- <div class="max-w-7xl mx-auto p-6 lg:p-8">
                 <div class="flex justify-center">
@@ -226,6 +290,12 @@
                 </div>
             </div>
         </div> --}}
+        <!-- التقسيم (Pagination) -->
+    @if($cars->hasPages())
+    <div class="mt-8">
+        {{ $cars->links() }}
+    </div>
+    @endif
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
     </body>
 </html>

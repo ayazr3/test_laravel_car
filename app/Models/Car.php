@@ -7,7 +7,38 @@ use Illuminate\Database\Eloquent\Model;
 
 class Car extends Model
 {
-    use HasFactory;
-    protected $fillable=['user_id','brand','model',
-    'year','price','currency','images','description','sold','color','location'];
+    protected $fillable = [
+        'user_id',
+        'brand',
+        'model',
+        'year',
+        'price',
+        'currency',
+        'description',
+        'color',
+        'images',
+        'location',
+
+    ];
+
+    protected $casts = [
+        'images' => 'array',
+        'location' => 'array',
+    ];
+    public function getImagesAttribute($value) {
+        return json_decode($value,true)??[];
+    }
+
+    public function addImage($path) {
+        $images =$this -> images;
+        $images [] = $path;
+        $this -> images = $images;
+        $this -> save;
+    }
+
+    // العلاقة مع المستخدم
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

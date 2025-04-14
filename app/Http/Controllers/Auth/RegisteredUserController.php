@@ -73,6 +73,7 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
-     }
+        // استبدل السطر return redirect(...) بهذا:
+    return redirect(RouteServiceProvider::redirectTo());
+    }
 }
