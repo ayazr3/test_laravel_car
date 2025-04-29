@@ -14,10 +14,19 @@
                     <div class="row m-3">
                         <div class="col-4">
                           <div id="list-example" class="list-group">
-                            <a class="list-group-item list-group-item-action" href="{{ route('car.index') }}">Manager Car</a>
+                            <a class="list-group-item list-group-item-action" href="{{ route('car.index') }}">{{ __('Manager Cars') }}</a>
                             {{-- <a class="list-group-item list-group-item-action" href="#list-item-2">User</a>
                             <a class="list-group-item list-group-item-action" href="#list-item-3">Review</a>
                             <a class="list-group-item list-group-item-action" href="#list-item-4">Ads</a> --}}
+                            <!-- خيارات المدير -->
+                            @if(auth()->user()->role == 'admin')
+                            <a class="list-group-item list-group-item-action" href="{{ route('manager.user.index') }}">{{ __('Manager Users') }}</a>
+                            <a class="list-group-item list-group-item-action" href="{{ route('manager.ads.index') }}">{{ __('Manager Advertisements') }}</a>
+                            <a class="list-group-item list-group-item-action" href="{{ route('review.index') }}">{{ __('Manager Complaints and suggestions') }}</a>
+                            <a class="list-group-item list-group-item-action" href="{{ route('car.index') }}">{{ __('Manager Setting') }}</a>
+
+
+                            @endif
                           </div>
                         </div>
                         <div class="col-8">
@@ -26,38 +35,6 @@
                         </div>
                     </div>
                 </div>
-                 {{-- <button type="button" class="btn btn-secondary justify-content-center">Create</button>
-                    <table class="table table-striped">
-                        <thead>
-                          <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">First</th>
-                            <th scope="col">Last</th>
-                            <th scope="col">Handle</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            <th scope="row">1</th>
-                            <td>Mark</td>
-                            <td>Otto</td>
-                            <td>@mdo</td>
-                          </tr>
-                          <tr>
-                            <th scope="row">2</th>
-                            <td>Jacob</td>
-                            <td>Thornton</td>
-                            <td>@fat</td>
-                          </tr>
-                          <tr>
-                            <th scope="row">3</th>
-                            <td>John</td>
-                            <td>Doe</td>
-                            <td>@social</td>
-                          </tr>
-                        </tbody>
-                      </table> --}}
-
 
             </div>
         </div>

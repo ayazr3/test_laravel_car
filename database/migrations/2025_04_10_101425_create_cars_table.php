@@ -24,6 +24,9 @@ return new class extends Migration
             $table->boolean('sold')->default(false);
             $table->string('color', 100);
             $table->json('location')->nullable();
+            $table->boolean('is_featured')->default(false);
+            $table->string('featured_status')->nullable();
+            $table->text('rejection_reason')->nullable();
             $table->timestamps();
         });
     }

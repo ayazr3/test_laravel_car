@@ -21,6 +21,7 @@ return new class extends Migration
             $table->json('images')->nullable();
             $table->enum('role', ['admin', 'vendor'])->default('vendor');
             $table->json('location')->nullable();
+            $table->boolean('status')->default(false);
             $table->rememberToken();
             $table->timestamps();
         });

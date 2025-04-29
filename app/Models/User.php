@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
@@ -25,7 +26,8 @@ class User extends Authenticatable
         'phone',
         'images',
         'role',
-        'location'
+        'location',
+        'status',
     ];
 
     /**
@@ -69,6 +71,26 @@ class User extends Authenticatable
         public function cars(): HasMany
         {
             return $this->hasMany(Car::class);
+        }
+        public function ads(): HasMany
+        {
+            return $this->hasMany(Ads::class);
+        }
+
+        protected static function booted()
+        {
+            static::updated(function ($user) {
+                if ($user->isDirty('status') && $user->status === false) {
+                    // إذا كان المستخدم هو نفسه الذي تم تحديث حالته
+                    if (Auth::check() && Auth::id() === $user->id) {
+                        Auth::logout();
+                    } else {
+                        // إذا كان مستخدم آخر، نقوم بإنهاء جلسته إذا كان مسجل دخول
+                        $user->tokens()->delete();
+                        \Session::getHandler()->destroy($user->getRememberToken());
+                    }
+                }
+            });
         }
 
 }

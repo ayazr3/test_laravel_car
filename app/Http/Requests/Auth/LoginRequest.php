@@ -39,13 +39,36 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
+        // $this->ensureIsNotRateLimited();
+
+        // if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        //     RateLimiter::hit($this->throttleKey());
+
+        //     throw ValidationException::withMessages([
+        //         'email' => trans('auth.failed'),
+        //     ]);
+        // }
+
+        // RateLimiter::clear($this->throttleKey());
+
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $credentials = $this->only('email', 'password');
+
+        if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => __('auth.failed'),
+            ]);
+        }
+
+        // التحقق من حالة المستخدم بعد المصادقة الناجحة
+        $user = Auth::user();
+        if (!$user->status) {
+            Auth::logout();
+            throw ValidationException::withMessages([
+                'email' => __('Your account is inactive. Please contact the administrator.'),
             ]);
         }
 

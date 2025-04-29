@@ -22,6 +22,7 @@ return new class extends Migration
             $table->json('location')->nullable();
             $table->string('email', 255);
             $table->string('phone', 255);
+            $table->boolean('is_public')->default(false);
             $table->timestamps();
         });
     }

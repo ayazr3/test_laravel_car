@@ -1,87 +1,3 @@
-{{-- @extends('car.navbar')
-
-@section('title')
-{{ __('All car') }}
-@endsection
-
-@section('content')
-        @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-    <a class="btn btn-secondary justify-content-center" href="{{ route('car.create') }}">Create</a>
-    <div class="row">
-        @foreach ($cars as $car)
-        <table class="table table-striped">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Brand</th>
-                <th scope="col">Model</th>
-                <th scope="col">Year</th>
-                <th scope="col">Price</th>
-                <th scope="col">images</th>
-                <th scope="col">sold</th>
-                <th scope="col">Description</th>
-                <th scope="col">color</th>
-                <th scope="col">location</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{{ $car->id }}</td>
-                <td>{{ $car->brand }} </td>
-                <td>{{ $car->model }}</td>
-                <td>{{ $car->year }}</td>
-                <td>{{ $car->price .' '. $car->currency }}</td>
-                <td></td>
-                <td>{{ $car->sold }}</td>
-                <td>{{ $car->description }}</td>
-                <td>{{ $car->color }}</td>
-                <td></td>
-              </tr>
-            </tbody>
-          </table>
-            {{-- <div class="col-md-4 mb-4">
-
-                <div class="card">
-                    <img src="{{ asset('storage/'.$car->path) }}" class="card-img-top" >
-                </div>
-            </div>
-            <div class="card-footer">
-                <a href="{{ route('car.edit', $car->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                <a href="{{ route('car.show', $car->id) }}" class="btn btn-sm btn-primary">Show</a>
-                <form action="{{ route('car.destroy', $car->id) }}" method="POST"onsubmit="return confirm('Are you sure you want to delete this image?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
-            </div> --}}
-        {{-- @endforeach
-    </div> --}}
-
-        {{-- <div class="row">
-            @foreach($images as $image)
-                <div class="col-md-4 mb-4">
-                    <div class="card">
-                        <img src="{{ asset('storage/'.$image->path) }}" class="card-img-top" alt="{{ $image->title }}">
-                        <div class="card-body">
-                            <h5 class="card-title">{{ $image->title }}</h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer">
-                    <a href="{{ route('images.edit', $image->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                    <a href="{{ route('images.show', $image->id) }}" class="btn btn-sm btn-primary">Show</a>
-                    <form action="{{ route('images.destroy', $image->id) }}" method="POST"onsubmit="return confirm('Are you sure you want to delete this image?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                </div>
-            @endforeach
-        </div> --}}
 
         @extends('car.navbar')
 
@@ -100,24 +16,39 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         @foreach ($cars as $car)
             <div class="bg-white rounded-lg shadow-md overflow-hidden">
-                <div class="carousel-inner">
-                   <div class="carousel carousel-dark slide">
-                    @foreach ($car->images as $image)
-                        <div class=" ">
-                            <img src="{{ asset('storage/' . $image) }}"
-                                 class="w-full h-48 object-cover"
-                                 alt="{{ $car->brand }} {{ $car->model }}" width="20px"height="20px">
+                <div id="carImagesCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {{-- @foreach($car->images as $key => $image)
+                        <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
+                            <img src="{{ asset('storage/' . $image) }}" class="d-block w-100 carousel-img" alt="صورة السيارة {{ $key + 1 }}">
                         </div>
-                    @endforeach
+                        @endforeach --}}
+                        @foreach($car->images as $key => $image)
+                            @if(is_array($image))
+                                <img src="{{ asset('storage/' . $image[0]) }}" class="d-block w-100 carousel-img" alt="صورة السيارة {{ $key + 1 }}">
+                            @else
+                                <img src="{{ asset('storage/' . $image) }}" class="d-block w-100 carousel-img" alt="صورة السيارة {{ $key + 1 }}">
+                            @endif
+                        @endforeach
                     </div>
 
-                </div>
+                    @if(count($car->images) > 1)
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carImagesCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carImagesCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
 
-                <div class="carousel-dots flex justify-center mt-2">
-                    @foreach ($car->images as $index)
-                        <button class="w-2 h-2 mx-1 rounded-full bg-gray-300"
-                                onclick="scrollToImage({{ $index }})"></button>
-                    @endforeach
+                    <div class="carousel-indicators">
+                        @foreach($car->images as $key => $image)
+                        <button type="button" data-bs-target="#carImagesCarousel" data-bs-slide-to="{{ $key }}"
+                            class="{{ $key == 0 ? 'active' : '' }}" aria-current="{{ $key == 0 ? 'true' : 'false' }}"></button>
+                        @endforeach
+                    </div>
+                    @endif
                 </div>
 
                 <div class="p-4">
@@ -136,14 +67,6 @@
                                 {{ __('Delete') }}
                             </button>
                         </form>
-                        {{-- <form action="{{ route('car.toggle-sold', $car->id) }}" method="POST">
-                            @csrf
-                            <button type="submit"
-                                class="sold-btn px-4 py-2 rounded-full text-white font-medium {{ $car->sold ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700' }}"
-                                onclick="return confirm('هل تريد تغيير حالة السيارة؟')">
-                                {{ $car->sold ? '✓ مباعة' : '✗ متاحة' }}
-                            </button>
-                        </form> --}}
                         <form action="{{ route('car.toggle-sold', $car->id) }}" method="POST" class="inline">
                             @csrf
                             @method('POST') <!-- بعض الأنظمة تفضل PATCH بدل POST -->
@@ -153,6 +76,24 @@
                                 {{ $car->sold ? '✓ مباعة' : '✗ متاحة' }}
                             </button>
                         </form>
+                        <div class="mt-2">
+                            @if($car->is_featured)
+                                <span class="badge bg-success">إعلان مميز</span>
+                            @else
+                                <form action="{{ route('cars.request-featured', $car->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        طلب إعلان مميز
+                                    </button>
+                                </form>
+
+                                @if($car->featured_status == 'rejected')
+                                    <div class="alert alert-danger mt-2">
+                                        <small>سبب الرفض: {{ $car->rejection_reason }}</small>
+                                    </div>
+                                @endif
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -168,29 +109,7 @@
         const items = carousel.querySelectorAll('.carousel-item');
         items[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-//     document.querySelectorAll('form[action*="toggle-sold"]').forEach(form => {
-//     form.addEventListener('submit', async (e) => {
-//         e.preventDefault();
 
-//         if (!confirm('هل تريد تغيير حالة السيارة؟')) return;
-
-//         try {
-//             const response = await fetch(form.action, {
-//                 method: 'POST',
-//                 headers: {
-//                     'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value,
-//                     'Accept': 'application/json'
-//                 }
-//             });
-
-//             if (response.ok) {
-//                 location.reload(); // أو يمكنك استخدام AJAX لتحديث الواجهة فقط
-//             }
-//         } catch (error) {
-//             console.error('Error:', error);
-//         }
-//     });
-// });
 </script>
 
 <style>

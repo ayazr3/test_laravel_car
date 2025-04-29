@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Ads;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
@@ -36,6 +37,14 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
         });
+        view()->composer('welcome', function ($view) {
+            $view->with('ads',Ads::get()
+                // ->where('start_date', '<=', now())
+                // ->where('end_date', '>=', now())
+                // ->latest()
+                // ->take(3)
+                );
+        });
     }
 
     public static function home()
@@ -49,9 +58,9 @@ class RouteServiceProvider extends ServiceProvider
     }
     public static function redirectTo()
     {
-        if (auth()->user()->role === 'admin') {
-            return route('admin.dashboard');
-        }
+        // if (auth()->user()->role === 'admin') {
+        //     return route('admin.dashboard');
+        // }
         return route('dashboard');
     }
 }

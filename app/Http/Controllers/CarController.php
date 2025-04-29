@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ads;
 use App\Models\Car;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -70,9 +71,10 @@ class CarController extends Controller
                 'lat' => $request->lat,
                 'lng' => $request->lng,
             ],
+            'status' => 'pending', // يتم إضافتها كطلب جديد يحتاج موافقة
         ]);
 
-        return redirect()->route('car.index')->with('success', 'تمت إضافة السيارة بنجاح!');
+        return redirect()->route('car.index')->with('success', 'تم تقديم طلب الإعلان بنجاح، بانتظار الموافقة من الإدارة');
     }
 
     /**
@@ -108,6 +110,7 @@ class CarController extends Controller
      */
     public function update(Request $request, Car $car)
     {
+
         if ($car->user_id != auth()->id()) {
             abort(403, 'Unauthorized');
         }
@@ -126,16 +129,22 @@ class CarController extends Controller
         ]);
 
         // معالجة الصور الحالية
-        $currentImages = $request->existing_images ?? $car->images;
+        $currentImages = $request->existing_images ?? [];
 
         // حذف الصور المحددة
         if ($request->has('deleted_images')) {
-            foreach ($request->deleted_images as $index) {
-                if (isset($car->images[$index])) {
-                    Storage::disk('public')->delete($car->images[$index]);
+            $deletedIndices = $request->deleted_images;
+            $imagesToKeep = [];
+
+            foreach ($car->images as $index => $image) {
+                if (!in_array($index, $deletedIndices)) {
+                    $imagesToKeep[] = $image;
+                } else {
+                    Storage::disk('public')->delete($image);
                 }
             }
-            $currentImages = array_values(array_diff_key($currentImages, array_flip($request->deleted_images)));
+
+            $currentImages = $imagesToKeep;
         }
 
         // رفع الصور الجديدة
@@ -203,11 +212,142 @@ class CarController extends Controller
         return back()->with('success', 'تم التحديث بنجاح');
     }
     public function viewAll() {
-        $cars = Car::with('user') // تحميل علاقة المستخدم مسبقاً
-              ->where('sold', false)
-              ->latest()
-              ->paginate(10); // أو ->get() إذا كنت لا تريد التقسيم
 
-    return view('welcome', compact('cars'));
+        // السيارات العادية (غير المميزة وغير المباعة)
+        $regularCars = Car::where('sold', false)
+
+            ->whereHas('user', function($query) {
+                $query->where('status', true); // إذا كان لديك حقل لحالة المستخدم
+            })
+            ->with('user')
+            ->latest()
+            ->paginate(9);
+
+        // الإعلانات المميزة (المعتمدة والمنشورة)
+        $ads = Ads::where('is_public', 1)
+            ->where('end_date', '>=', now())
+            ->with(['car', 'user']) // تأكد من وجود هذه العلاقات
+            ->orderBy('created_at', 'desc')
+            ->take(6)
+            ->get();
+
+// dd($ads);
+        return view('welcome', compact('regularCars', 'ads'));
+    //     $regularCars = Car::where('sold', false)
+    //     ->where('is_featured', false)
+    //     ->latest()
+    //     ->paginate(9);
+
+    //     $ads = Ads::where('is_public', true)
+    //         ->where('end_date', '>=', now())
+    //         ->orderBy('created_at', 'desc')
+    //         ->take(6)
+    //         ->get();
+
+    // return view('welcome', compact('regularCars', 'ads'));
     }
+    // طلب إعلان مميز
+    public function requestFeatured($id)
+    {
+        $car = Car::where('user_id', auth()->id())->findOrFail($id);
+
+        $car->update([
+            'featured_status' => 'pending',
+            'rejection_reason' => null
+        ]);
+
+        return back()->with('success', 'تم إرسال طلب الإعلان المميز بنجاح');
+    }
+
+    // عرض طلبات الإعلانات المميزة للأدمن
+    public function featuredRequests()
+    {
+        $cars = Car::where('featured_status', 'pending')->with('user')->paginate(10);
+        return view('admin.featured-requests', compact('cars'));
+    }
+
+    // موافقة الأدمن على الإعلان المميز
+    public function approveFeatured($id)
+    {
+        $car = Car::with('user')->findOrFail($id);
+
+        // إنشاء إعلان جديد
+        $ad = Ads::create([
+            'fullname' => $car->user->name,
+            'image' => $car->images[0] ?? null,
+            'url' => route('cars.details', $car->id),
+            'hit' => 0,
+            'start_date' => now(),
+            'end_date' => now()->addDays(30),
+            'location' => $car->location,
+            'email' => $car->user->email,
+            'phone' => $car->user->phone,
+            'is_public' => true,
+            'car_id' => $car->id, // ربط الإعلان بالسيارة
+        ]);
+
+        // تحديث حالة السيارة
+        $car->update([
+            'is_featured' => true,
+            'featured_status' => 'approved'
+        ]);
+
+        return back()->with('success', 'تمت الموافقة على الإعلان بنجاح');
+    }
+
+    // رفض الأدمن للإعلان المميز
+    public function rejectFeatured(Request $request, $id)
+    {
+        $request->validate(['reason' => 'required|string|max:255']);
+
+        $car = Car::findOrFail($id);
+        $car->update([
+            'is_featured' => false,
+            'featured_status' => 'rejected',
+            'rejection_reason' => $request->reason
+        ]);
+
+        return back()->with('success', 'تم رفض طلب الإعلان المميز');
+    }
+    // public function pendingCars()
+    // {
+    //     $cars = Car::where('status', 'pending')->latest()->paginate(10);
+    //     return view('admin.manager_cars.pending', compact('cars'));
+    // }
+
+    // public function reviewCar($id)
+    // {
+    //     $car = Car::with('user')->findOrFail($id);
+    //     return view('admin.manager_cars.review', compact('car'));
+    // }
+
+    // public function approveCar(Request $request, $id)
+    // {
+    //     $car = Car::findOrFail($id);
+
+    //     $car->update([
+    //         'status' => 'approved',
+    //         'admin_notes' => null,
+    //     ]);
+
+    //     return redirect()->route('admin.cars.pending')
+    //         ->with('success', 'Car advertisement approved successfully');
+    // }
+
+    // public function rejectCar(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'admin_notes' => 'required|string|max:500',
+    //     ]);
+
+    //     $car = Car::findOrFail($id);
+
+    //     $car->update([
+    //         'status' => 'rejected',
+    //         'admin_notes' => $request->admin_notes,
+    //     ]);
+
+    //     return redirect()->route('admin.cars.pending')
+    //         ->with('success', 'Car advertisement rejected');
+    // }
 }
